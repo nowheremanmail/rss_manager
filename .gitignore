@@ -1,0 +1,7 @@
+target/*
+.idea/*
+dbs/*
+mainRunner/*
+target
+out/*
+logs/*
