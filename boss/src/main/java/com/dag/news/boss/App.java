@@ -16,53 +16,17 @@ import com.dag.news.model.PlainJpaConfig;
 
 @SpringBootApplication
 @Configuration
-@EnableIntegration
-@ImportResource("spring/spring-integration.xml")
 @ComponentScan(basePackages = { "com.dag.news"   })
 @Import(PlainJpaConfig.class)
-@EnableScheduling
-@EnableCaching
 public class App implements CommandLineRunner {
-
-//	@Autowired
-//	private RssReaderManager rssReaderManager;
-
 	@Override
 	public void run(String... args) throws Exception {
-		// System.out.println(helloWorldService.getHelloMessage());
-
-		//rssReaderManager.run();
-
 		if ((args.length > 0) && args[0].equals("exitcode")) {
 			throw new ExitException();
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-//		 String a = System.getProperty(AbstractEnvironment.DEFAULT_PROFILES_PROPERTY_NAME);
-//	     String b = System.getProperty(AbstractEnvironment.ACTIVE_PROFILES_PROPERTY_NAME);
-	        
 		SpringApplication.run(App.class, args);
 	}
 }
-/**
- * @Component
-public class SampleBeanImpl implements SampleBean {
-
-  @Async
-  void doSomething() { … }
-}
-
-
-@Component
-public class SampleBeanInititalizer {
-
-  @Autowired
-  private final SampleBean bean;
-
-  @PostConstruct
-  public void initialize() {
-    bean.doSomething();
-  }
-}
- */
