@@ -64,14 +64,8 @@ public class CheckRss {
         long timeBetween = ttl * 60L * 1000L / N;
 
         for (Feed _feed : list) {
-            logger.info("found " + _feed);
-            feedCheck(_feed);
-
-            try {
-                Thread.sleep(timeBetween);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+                logger.info("found " + _feed);
+                feedCheck(_feed);
         }
     }
 
@@ -86,7 +80,7 @@ public class CheckRss {
             String message = info != null ? "" : "feed not valid?"; // result.getMessage();
             int ttl = -1;
 
-            if (good && qualityFactor > 0) {
+            /*if (good && qualityFactor > 0) {
                 Set<String> words = new HashSet<String>();
 
                 for (SyndEntry nw : info.getEntries()) {
@@ -113,7 +107,7 @@ public class CheckRss {
                     good = false;
                 }
             }
-
+*/
 
             if (good) {
                 feed.setDescription(info.getDescription());
