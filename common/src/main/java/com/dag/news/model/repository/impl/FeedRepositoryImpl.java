@@ -41,6 +41,15 @@ public class FeedRepositoryImpl implements FeedRepository {
 	}
 
 	@Override
+	public List<Feed> findInvalid() {
+		TypedQuery<Feed> qry = em.createQuery(
+				"select p from Feed p where p.language is null or p.disabled = :v",
+				Feed.class);
+		qry.setParameter("v", true);
+		return qry.getResultList();
+	}
+
+	@Override
 	public List<Feed> findRefresh(Date date) {
 		TypedQuery<Feed> qry = em.createQuery(
 				"select p from Feed p where p.nextUpdate is not null and (p.disabled is null or p.disabled = :v) and p.nextUpdate <= :d order by p.nextUpdate",
@@ -136,13 +145,6 @@ public class FeedRepositoryImpl implements FeedRepository {
 		query1.setParameter("t", Calendar.getInstance().getTime());
 		query1.setParameter("v", false);
 		return query1.executeUpdate();
-
-		// TODO Auto-generated method stub
-		// feed.setDisabled(false);
-		// feed.setLastUpdate(null);
-		// feed.setNextUpdate(Calendar.getInstance().getTime());
-		// feedRepository.save(feed);
-		//
 
 	}
 }

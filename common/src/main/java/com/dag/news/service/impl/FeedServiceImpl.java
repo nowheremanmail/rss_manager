@@ -93,6 +93,11 @@ public class FeedServiceImpl implements FeedService {
 	}
 
 	@Override
+	public List<Feed> findInvalid() {
+		return feedRepository.findInvalid();
+	}
+
+	@Override
 	public List<Feed> findAll() {
 		return feedRepository.findAll(null, null, 0);
 	}

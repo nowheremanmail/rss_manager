@@ -44,8 +44,6 @@
 	<modules>
 		<module>common</module>
 		<module>boss</module>
-		<module>feeds</module>
-		<module>news</module>
 	</modules>
 
 	<build>

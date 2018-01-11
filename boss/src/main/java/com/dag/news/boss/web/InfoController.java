@@ -8,7 +8,6 @@ import com.dag.news.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,9 +37,6 @@ public class InfoController {
 
     @Autowired
     LanguageService languageService;
-
-    @Autowired
-    MessageChannel htmlToProcess;
 
     @RequestMapping(method = RequestMethod.POST, value = "/addRss", produces = "application/json")
     public Map<String, Object> addRss(@RequestParam("url") String _url) {
@@ -213,11 +209,10 @@ public class InfoController {
 
                         feed.setDisabled(false);
 
-                        feedService.lock(feed);
+                        feedService.save(feed);
                         Map<String, Object> msg = new HashMap<String, Object>();
                         msg.put("id", feed.getId());
                         msg.put("operation", Feed.PROCESS);
-                        feedToProcess.send(new GenericMessage<Map<String, Object>>(msg));
                     } else
                         logger.warn("impossible starting " + feed);
 
@@ -231,21 +226,19 @@ public class InfoController {
                             return res;
                         }
 
-                        if ((feed.getDisabled() != null && feed.getDisabled().booleanValue())
-                                || feed.getNextUpdate() != null) {
-                            logger.info("changing language to " + param + " " + feed);
-                            feed.setDisabled(false);
+                        logger.info("changing language to " + param + " " + feed);
+                        feed.setDisabled(false);
 
-                            feedService.lock(feed);
-                            Map<String, Object> msg = new HashMap<String, Object>();
-                            msg.put("id", feed.getId());
-                            msg.put("operation", Feed.CHANGE_LANGUAGE);
-                            msg.put("language", langDst.getId());
+                        feed.setLanguage(langDst);
+                        feedService.save(feed);
+                        Map<String, Object> msg = new HashMap<String, Object>();
+                        msg.put("id", feed.getId());
+                        msg.put("operation", Feed.CHANGE_LANGUAGE);
+                        msg.put("language", langDst.getId());
 
-                            feedToProcess.send(new GenericMessage<Map<String, Object>>(msg));
-                        } else
-                            logger.warn("impossible changing language to " + param + " " + feed);
-                    }
+                    } else
+                        logger.warn("impossible changing language to " + param + " " + feed);
+
                 } else if ("disable".equals(oper)) {
                     if (feed.getDisabled() != null && !feed.getDisabled().booleanValue()
                             && feed.getNextUpdate() != null) {
@@ -257,20 +250,6 @@ public class InfoController {
                         res.put("m", "feed [" + url + "] processed");
                     } else
                         logger.warn("impossible to disable " + param + " " + feed);
-                } else if ("reprocess".equals(oper)) {
-                    if ((feed.getDisabled() != null && feed.getDisabled().booleanValue())
-                            || feed.getNextUpdate() != null) {
-                        logger.info("reprocess language to " + param + " " + feed);
-                        feed.setDisabled(false);
-                        feedService.lock(feed);
-                        Map<String, Object> msg = new HashMap<String, Object>();
-                        msg.put("id", feed.getId());
-                        msg.put("operation", Feed.REPROCESS);
-                        feedToProcess.send(new GenericMessage<Map<String, Object>>(msg));
-                        res.put("r", "OK");
-                        res.put("m", "feed [" + url + "] processed");
-                    } else
-                        logger.warn("impossible reprocess language to " + param + " " + feed);
                 }
                 res.put("r", "OK");
             } else {
@@ -314,44 +293,11 @@ public class InfoController {
         return ff;
     }
 
-    @Autowired
-    MessageChannel clusterProcess;
-
-    @RequestMapping(method = RequestMethod.POST, value = "/{language}/{day}/cluster", produces = "application/json")
-    public Map<String, List<Map<String, String>>> cluster(@PathVariable String language,
-                                                          @PathVariable String day, @RequestParam String loops, @RequestParam String factor) {
-
-        Map<String, Object> msg = new HashMap<String, Object>();
-        msg.put("language", language);
-        msg.put("date", day);
-
-        if (loops != null && loops.length() > 0) {
-            msg.put("loops", Integer.parseInt(loops));
-        }
-
-        if (factor != null && factor.length() > 0) {
-            msg.put("factor", Double.parseDouble(factor));
-        }
-
-        clusterProcess.send(new GenericMessage<Map<String, Object>>(msg));
-
-        return new HashMap<>();
-    }
-
-    @Autowired
-    MessageChannel feedToProcess;
 
     @RequestMapping(method = RequestMethod.POST, value = "/changeLanguage", produces = "application/json")
     public Map<String, Object> changeLanguageFeeds(String sourceLang, String destinationLang) {
         Map<String, Object> ff = new HashMap<String, Object>();
 
-        // Language langSrc = languageService.find(sourceLang);
-        // if (langSrc == null) {
-        // ff.put("r", "KO");
-        // ff.put("m", "language [" + sourceLang + "] doesn't exists");
-        // return ff;
-        // }
-        //
         Language langDst = languageService.find(destinationLang);
         if (langDst == null) {
             ff.put("r", "KO");
@@ -364,19 +310,16 @@ public class InfoController {
         for (Feed feed : list) {
             if (feed.getUrl().startsWith("http://") || feed.getUrl().startsWith("https://")) try {
                 if (!feed.getLanguage().equals(langDst)) {
-                    if (feed.getNextUpdate() != null) {
-                        logger.info("changing language to [" + destinationLang + "] for " + feed);
+                    logger.info("changing language to [" + destinationLang + "] for " + feed);
 
-                        feedService.lock(feed);
-                        Map<String, Object> msg = new HashMap<String, Object>();
-                        msg.put("id", feed.getId());
-                        msg.put("operation", Feed.CHANGE_LANGUAGE);
-                        msg.put("language", langDst.getId());
+                    feed.setLanguage(langDst);
+                    feedService.save(feed);
 
-                        feedToProcess.send(new GenericMessage<Map<String, Object>>(msg));
-                    } else {
-                        logger.info("already locked language to [" + destinationLang + "] for " + feed);
-                    }
+                    Map<String, Object> msg = new HashMap<String, Object>();
+                    msg.put("id", feed.getId());
+                    msg.put("operation", Feed.CHANGE_LANGUAGE);
+                    msg.put("language", langDst.getId());
+
                     // feedService.updateLanguage(feed, langDst);
                 } else {
                     logger.info("already language to [" + destinationLang + "] for " + feed);

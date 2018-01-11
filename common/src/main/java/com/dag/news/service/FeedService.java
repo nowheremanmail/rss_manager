@@ -12,6 +12,7 @@ public interface FeedService {
 	void lock(Feed feed);
 	void calculateNext (Feed feed);
 	List<Feed> findRefresh();
+	List<Feed> findInvalid();
 	List<Feed> findAll(String language);
 	void start(String string, boolean create);
 	Feed getOrInsert(String string, Language orInsert);

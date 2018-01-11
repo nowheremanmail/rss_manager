@@ -37,95 +37,95 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class NewsServiceImpl implements NewsService {
 
-	static private Logger logger = LoggerFactory.getLogger(NewsServiceImpl.class);
+    static private Logger logger = LoggerFactory.getLogger(NewsServiceImpl.class);
 
-	@Autowired
-	LanguageService languageService;
+    @Autowired
+    LanguageService languageService;
 
-	@Autowired
-	NewRepository newRepository;
+    @Autowired
+    NewRepository newRepository;
 
-	@Autowired
-	FeedRepository feedRepository;
+    @Autowired
+    FeedRepository feedRepository;
 
-	@Autowired
-	WordsService wordsService;
+    @Autowired
+    WordsService wordsService;
 
-	// WordRepository wordRepository;
-	@Autowired
-	WordOnNewsRepository wordOnNewsRepository;
+    // WordRepository wordRepository;
+    @Autowired
+    WordOnNewsRepository wordOnNewsRepository;
 
-	@Autowired
-	TwoWordOnNewsRepository twoWordOnNewsRepository;
+    @Autowired
+    TwoWordOnNewsRepository twoWordOnNewsRepository;
 
-	@Autowired
-	DayService dayService;
+    @Autowired
+    DayService dayService;
 
-	@Autowired
-	CategoriesService categoriesService;
+    @Autowired
+    CategoriesService categoriesService;
 
-	@Value("${news.root.folder}")
-	private String rootFolderName;
+    @Value("${news.root.folder}")
+    private String rootFolderName;
 
-	@Autowired
-	private ObjectMapper jacksonObjectMapper;
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
 
-	@Override
-	@Transactional(value = TxType.REQUIRED)
-	public void addDb(String title, String description, String link, Long feed, Date date, Language lang,
-			List<String> _categories, List<String> words) {
-		Feed from = feedRepository.findOne(feed);
-		CurrentDay day = dayService.getOrInsert(date);
-		List<Categories> categories = categoriesService.getOrInsert(lang, _categories);
-		logger.info("processing [" + title + "] " + date.toGMTString() + " in " + lang.getName() + " from " + from);
+    @Override
+    @Transactional(value = TxType.REQUIRED)
+    public void addDb(String title, String description, String link, Long feed, Date date, Language lang,
+                      List<String> _categories, List<String> words) {
+        Feed from = feedRepository.findOne(feed);
+        CurrentDay day = dayService.getOrInsert(date);
+        List<Categories> categories = categoriesService.getOrInsert(lang, _categories);
+        logger.info("processing [" + title + "] " + date.toGMTString() + " in " + lang.getName() + " from " + from);
 
-		New nw = newRepository.save(title, description, date, link, day, lang, from, categories);
+        New nw = newRepository.save(title, description, date, link, day, lang, from, categories);
 
-		updateLanguage(nw, words);
-	}
+        updateLanguage(nw, words);
+    }
 
-	static Map<String, FileWriter> files = new HashMap<>();
+    static Map<String, FileWriter> files = new HashMap<>();
 
-	@Override
-	@Transactional(value = TxType.REQUIRED)
-	public void add(String title, String description, String link, Long feed, Date date, Language lang,
-			List<String> _categories) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
-		// we want day to show original user date
-		// sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    @Override
+    @Transactional(value = TxType.REQUIRED)
+    public void add(String title, String description, String link, Long feed, Date date, Language lang,
+                    List<String> _categories) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+        // we want day to show original user date
+        // sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-		String day = sdf.format(date);
+        String day = sdf.format(date);
 
-		// Feed from = feedRepository.findOne ( feed );
-		// CurrentDay day = dayService.getOrInsert ( date );
-		// List < Categories > categories = categoriesService.getOrInsert ( lang
-		// , _categories );
-		logger.info("processing [" + title + "] " + date.toGMTString() + " in " + lang.getName() + " from " + feed);
+        // Feed from = feedRepository.findOne ( feed );
+        // CurrentDay day = dayService.getOrInsert ( date );
+        // List < Categories > categories = categoriesService.getOrInsert ( lang
+        // , _categories );
+        logger.info("processing [" + title + "] " + date.toGMTString() + " in " + lang.getName() + " from " + feed);
 
-boolean keep = false;
+        boolean keep = false;
 
-		Arrays.parallelSort();
+        //Arrays.parallelSort();
 
-		Map<String, Object> map = new HashMap<>();
-		map.put("title", title);
-		map.put("description", description);
-		map.put("link", link);
-		map.put("date", date);
-		map.put("categories", _categories);
+        Map<String, Object> map = new HashMap<>();
+        map.put("title", title);
+        map.put("description", description);
+        map.put("link", link);
+        map.put("date", date);
+        map.put("categories", _categories);
 
-		FileWriter writer = null;
-		try {
-			writer = files.get(lang.getName() + "-" + day);
-			if (writer == null) {
-				synchronized (files) {
-					writer = files.get(lang.getName() + "-" + day);
-					if (writer == null) {
-						File root = new File(rootFolderName);
-						File langFolder = new File(root, lang.getName());
-						langFolder.mkdirs();
-						File dateFile = new File(langFolder, day + ".txt");
+        FileWriter writer = null;
+        try {
+            writer = files.get(lang.getName() + "-" + day);
+            if (writer == null) {
+                synchronized (files) {
+                    writer = files.get(lang.getName() + "-" + day);
+                    if (writer == null) {
+                        File root = new File(rootFolderName);
+                        File langFolder = new File(root, lang.getName());
+                        langFolder.mkdirs();
+                        File dateFile = new File(langFolder, day + ".txt");
 
-						writer = new FileWriter(dateFile, true);
+                        writer = new FileWriter(dateFile, true);
 
 						/*if (files.size()>50) {
 							for (FileWriter writerTmp : files.values()) {
@@ -134,101 +134,100 @@ boolean keep = false;
 							files.clear();
 						}*/
 
-						if(keep)  files.put(lang.getName() + "-" + day, writer);
-					}
-				}
-			}
+                        if (keep) files.put(lang.getName() + "-" + day, writer);
+                    }
+                }
+            }
 
 
-			synchronized (writer) {
-				writer.write(jacksonObjectMapper.writeValueAsString(map));
-				writer.write("\n");
-				writer.flush();
-			}
+            synchronized (writer) {
+                writer.write(jacksonObjectMapper.writeValueAsString(map));
+                writer.write("\n");
+                writer.flush();
+            }
 
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		finally {
-			if(!keep) try {
-				writer.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (!keep) try {
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-	private void updateLanguage(New nw, List<String> words) {
-		String title = nw.getTitle();
-		Language lang = nw.getLanguage();
+    private void updateLanguage(New nw, List<String> words) {
+        String title = nw.getTitle();
+        Language lang = nw.getLanguage();
 
-		Word previous = null, current = null;
+        Word previous = null, current = null;
 
-		// Set<String> stopWords = Utils.stopWords(language);
+        // Set<String> stopWords = Utils.stopWords(language);
 
-		for (String tt : words) {
-			// if (!Utils.isNumber(tt, lang)) {
-			logger.debug("adding word [" + tt + "]");
-			current = wordsService.getOrInsert(tt, nw.getLanguage());
-			wordOnNewsRepository.save(nw.getLanguage(), nw.getDay(), current, nw);
-			// } else {
-			// logger.debug("number word [" + tt + "]");
-			// current = null;
-			// }
-			if (previous != null && current != null) {
-				twoWordOnNewsRepository.save(
-						new TwoWordsOnNews(new TwoWordsOnNewsID(nw.getLanguage(), nw.getDay(), previous, current, nw)));
-			}
-			previous = current;
-		}
-	}
+        for (String tt : words) {
+            // if (!Utils.isNumber(tt, lang)) {
+            logger.debug("adding word [" + tt + "]");
+            current = wordsService.getOrInsert(tt, nw.getLanguage());
+            wordOnNewsRepository.save(nw.getLanguage(), nw.getDay(), current, nw);
+            // } else {
+            // logger.debug("number word [" + tt + "]");
+            // current = null;
+            // }
+            if (previous != null && current != null) {
+                twoWordOnNewsRepository.save(
+                        new TwoWordsOnNews(new TwoWordsOnNewsID(nw.getLanguage(), nw.getDay(), previous, current, nw)));
+            }
+            previous = current;
+        }
+    }
 
-	@Override
-	public List<New> findAll(Feed feed, Language lang, int pageNumber, boolean changeLang) {
-		return newRepository.find(feed, lang, pageNumber, changeLang);
-	}
+    @Override
+    public List<New> findAll(Feed feed, Language lang, int pageNumber, boolean changeLang) {
+        return newRepository.find(feed, lang, pageNumber, changeLang);
+    }
 
-	@Override
-	public New find(Long id) {
-		return newRepository.findOne(id);
-	}
+    @Override
+    public New find(Long id) {
+        return newRepository.findOne(id);
+    }
 
-	@Override
-	@Transactional(value = TxType.REQUIRED)
-	public void changeLanguage(New nw, Language lang, List<String> words) {
-		logger.info("reprocessing [" + nw.getTitle() + "] " + nw.getDayTime().toGMTString() + " "
-				+ nw.getLanguage().getName() + " -> " + lang.getName());
+    @Override
+    @Transactional(value = TxType.REQUIRED)
+    public void changeLanguage(New nw, Language lang, List<String> words) {
+        logger.info("reprocessing [" + nw.getTitle() + "] " + nw.getDayTime().toGMTString() + " "
+                + nw.getLanguage().getName() + " -> " + lang.getName());
 
-		nw.setLanguage(lang);
-		//
-		// also we reprocess date
-		String pre = nw.getDay().getDay();
-		nw.setDay(dayService.getOrInsert(nw.getDayTime()));
-		logger.info("changing day?? " + pre + " -> " + nw.getDayTime().toGMTString() + " as " + nw.getDay().getDay());
-		//
-		updateLanguage(nw, words);
-		newRepository.save(nw);
-	}
+        nw.setLanguage(lang);
+        //
+        // also we reprocess date
+        String pre = nw.getDay().getDay();
+        nw.setDay(dayService.getOrInsert(nw.getDayTime()));
+        logger.info("changing day?? " + pre + " -> " + nw.getDayTime().toGMTString() + " as " + nw.getDay().getDay());
+        //
+        updateLanguage(nw, words);
+        newRepository.save(nw);
+    }
 
-	@Override
-	public List<New> findAll(Language lang, CurrentDay day, int pageNumber) {
-		return newRepository.findAll(lang, day, pageNumber);
-	}
+    @Override
+    public List<New> findAll(Language lang, CurrentDay day, int pageNumber) {
+        return newRepository.findAll(lang, day, pageNumber);
+    }
 
-	// @Override
-	// @Transactional(value = TxType.REQUIRED)
-	// public void update(New new1) {
-	// newRepository.save(new1);
-	// }
+    // @Override
+    // @Transactional(value = TxType.REQUIRED)
+    // public void update(New new1) {
+    // newRepository.save(new1);
+    // }
 
-	@Override
-	@Transactional(value = TxType.REQUIRED)
-	public void updateCluster(Long id, int i) {
-		New nw = newRepository.findOne(id);
-		if (nw != null) {
-			nw.setCluster((long) i);
-			newRepository.save(nw);
-		}
-	}
+    @Override
+    @Transactional(value = TxType.REQUIRED)
+    public void updateCluster(Long id, int i) {
+        New nw = newRepository.findOne(id);
+        if (nw != null) {
+            nw.setCluster((long) i);
+            newRepository.save(nw);
+        }
+    }
 
 }

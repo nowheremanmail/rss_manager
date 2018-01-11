@@ -18,6 +18,7 @@ import com.dag.news.model.PlainJpaConfig;
 @Configuration
 @ComponentScan(basePackages = { "com.dag.news"   })
 @Import(PlainJpaConfig.class)
+@EnableScheduling
 public class App implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
