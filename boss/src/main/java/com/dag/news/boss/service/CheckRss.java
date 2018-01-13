@@ -1,25 +1,18 @@
 package com.dag.news.boss.service;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import javax.annotation.PostConstruct;
-
 import com.dag.news.feeds.BasicRssReader;
+import com.dag.news.model.Feed;
+import com.dag.news.service.FeedService;
 import com.dag.news.service.LanguageService;
-import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.dag.news.model.Feed;
-import com.dag.news.service.FeedService;
+import java.util.List;
 
 @Component
 public class CheckRss {
@@ -60,12 +53,13 @@ public class CheckRss {
         logger.info("Check ");
         List<Feed> list = feedService.findInvalid();
         int N = list.size();
+        if (N > 0) {
+            long timeBetween = ttl * 60L * 1000L / N;
 
-        long timeBetween = ttl * 60L * 1000L / N;
-
-        for (Feed _feed : list) {
+            for (Feed _feed : list) {
                 logger.info("found " + _feed);
                 feedCheck(_feed);
+            }
         }
     }
 
