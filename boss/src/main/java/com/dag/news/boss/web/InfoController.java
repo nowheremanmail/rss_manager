@@ -1,22 +1,16 @@
 package com.dag.news.boss.web;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.dag.news.model.Feed;
+import com.dag.news.model.Language;
 import com.dag.news.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.support.GenericMessage;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.dag.news.model.Feed;
-import com.dag.news.model.Language;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class InfoController {
@@ -238,18 +232,21 @@ public class InfoController {
 
                     } else
                         logger.warn("impossible changing language to " + param + " " + feed);
+                } else if ("enable".equals(oper)) {
+                    logger.info("enable " + param + " " + feed);
+                    feed.setDisabled(false);
+                    feedService.save(feed);
+
+                    res.put("r", "OK");
+                    res.put("m", "feed [" + url + "] processed");
 
                 } else if ("disable".equals(oper)) {
-                    if (feed.getDisabled() != null && !feed.getDisabled().booleanValue()
-                            && feed.getNextUpdate() != null) {
-                        logger.info("disable " + param + " " + feed);
-                        feed.setDisabled(true);
-                        feedService.save(feed);
+                    logger.info("disable " + param + " " + feed);
+                    feed.setDisabled(true);
+                    feedService.save(feed);
 
-                        res.put("r", "OK");
-                        res.put("m", "feed [" + url + "] processed");
-                    } else
-                        logger.warn("impossible to disable " + param + " " + feed);
+                    res.put("r", "OK");
+                    res.put("m", "feed [" + url + "] processed");
                 }
                 res.put("r", "OK");
             } else {
